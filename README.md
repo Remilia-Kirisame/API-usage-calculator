@@ -96,9 +96,9 @@ http://127.0.0.1:8001/
 
 ```text
 .
-├── index.html          # Self-contained calculator app
-├── deepseek-color.svg  # Source/reference DeepSeek mark
-├── deepseek-text.svg   # Source/reference DeepSeek wordmark
+├── DS-Calculator.html  # Self-contained calculator app
+├── assets				# assets used to build
+├── docs				# documents
 └── README.md
 ```
 
@@ -109,6 +109,10 @@ http://127.0.0.1:8001/
 - Pricing can change. Verify current DeepSeek pricing before using this for accounting decisions.
 - The app assumes the DeepSeek export CSV column names and token type names listed above.
 - Very large exports are parsed in the browser, so performance depends on local browser memory and CPU.
+
+## Reference
+
+Fonts are referenced from: https://api-docs.deepseek.com/
 
 ## License
 
