@@ -966,6 +966,7 @@ const DEFAULT_PRICES = {
 };
 
 const PRICE_STORAGE_KEY = 'deepseek-usage-pricing-v1';
+const CSV_CACHE_KEY = 'deepseek-usage-csv-cache-v1';
 
 function clonePrices(p) { return JSON.parse(JSON.stringify(p)); }
 function loadSavedPrices() {
@@ -973,6 +974,27 @@ function loadSavedPrices() {
     const s = localStorage.getItem(PRICE_STORAGE_KEY);
     return s ? JSON.parse(s) : null;
   } catch { return null; }
+}
+
+function loadCachedCsv() {
+  try {
+    const s = sessionStorage.getItem(CSV_CACHE_KEY);
+    if (!s) return null;
+    const obj = JSON.parse(s);
+    if (!obj || !Array.isArray(obj.amount) || !Array.isArray(obj.cost)) return null;
+    return obj;
+  } catch { return null; }
+}
+function saveCachedCsv() {
+  try {
+    sessionStorage.setItem(CSV_CACHE_KEY, JSON.stringify({
+      amount: csvData.amount,
+      cost: csvData.cost,
+    }));
+  } catch { /* quota or unavailable; non-fatal */ }
+}
+function clearCachedCsv() {
+  try { sessionStorage.removeItem(CSV_CACHE_KEY); } catch {}
 }
 
 let activePrices = loadSavedPrices() ?? clonePrices(DEFAULT_PRICES);
@@ -1110,6 +1132,7 @@ async function handleFile(file) {
     csvData.cost = parseCSV(costText);
     dataset = transform(csvData.amount, csvData.cost);
     showDashboard();
+    saveCachedCsv();
   } catch (err) {
     console.error(err);
     sub.textContent = t('dropError');
@@ -1527,6 +1550,7 @@ function setupControls() {
   $('#reset-btn').addEventListener('click', () => {
     dataset = null;
     csvData = { amount: [], cost: [] };
+    clearCachedCsv();
     if (chart) chart.clear();
     $('#dashboard').classList.add('hidden');
     $('#dropzone').classList.remove('hidden');
@@ -1648,11 +1672,28 @@ function setupPricingControls() {
 }
 
 /* ── Init ────────────────────────────────────────────────────────── */
+function tryRestoreFromCache() {
+  const cached = loadCachedCsv();
+  if (!cached) return;
+  try {
+    csvData.amount = cached.amount;
+    csvData.cost = cached.cost;
+    dataset = transform(csvData.amount, csvData.cost);
+    showDashboard();
+  } catch (e) {
+    console.warn('Failed to restore cached analysis:', e);
+    clearCachedCsv();
+    dataset = null;
+    csvData = { amount: [], cost: [] };
+  }
+}
+
 function init() {
   setupDropzone();
   setupControls();
   setupPricingControls();
   applyI18n();
+  tryRestoreFromCache();
 }
 init();
 </script>
